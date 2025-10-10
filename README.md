@@ -6,7 +6,9 @@ A JavaScript-based dashboard for advanced control and monitoring of the ZTE MC80
 
 It solves the problem that many routers provided by ISPs (like Telekom, Magenta, etc.) are heavily restricted in their functionality, preventing access to important settings like DNS servers or band locking.
 
-add Picture later
+<img width="222" height="944" alt="Screenshot 1" src="https://github.com/user-attachments/assets/9ef2941b-0717-457c-b18a-a160949ffc39" />
+<img width="287" height="229" alt="Screenshot 2" src="https://github.com/user-attachments/assets/aadfb2c8-a018-47ed-96cc-83259bbe2c53" />
+
 
 ### Features
 
