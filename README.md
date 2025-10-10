@@ -6,8 +6,7 @@ A JavaScript-based dashboard for advanced control and monitoring of the ZTE MC80
 
 It solves the problem that many routers provided by ISPs (like Telekom, Magenta, etc.) are heavily restricted in their functionality, preventing access to important settings like DNS servers or band locking.
 
-![Dashboard Screenshot](screenshot.png)
-*(You should insert a screenshot of your dashboard here. To do this, upload an image file, e.g., `screenshot.png`, to your repository and adjust the link.)*
+add Picture later
 
 ### Features
 
@@ -50,9 +49,6 @@ Use of this script is entirely at **your own risk**. The author of this reposito
 Ein JavaScript-basiertes Dashboard zur erweiterten Steuerung und Überwachung des ZTE MC801A 5G Routers. Dieses Skript wird direkt im Browser ausgeführt und blendet eine leistungsstarke Benutzeroberfläche über die Standard-Webseite des Routers.
 
 Es löst das Problem, dass viele von Providern (wie Telekom, Magenta, etc.) bereitgestellte Router in ihren Funktionen stark eingeschränkt sind und wichtige Einstellungen wie DNS-Server oder Band-Locking nicht zugänglich machen.
-
-![Dashboard Screenshot](screenshot.png)
-*(Hier solltest du einen Screenshot deines Dashboards einfügen. Lade dazu eine Bilddatei z.B. als `screenshot.png` in dein Repository und passe den Link an.)*
 
 ### Features
 
