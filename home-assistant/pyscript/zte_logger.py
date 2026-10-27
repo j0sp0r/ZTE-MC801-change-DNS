@@ -43,6 +43,11 @@ WATCHDOG_ENABLED = True
 WATCHDOG_THRESHOLD_SEC = 300
 WATCHDOG_COOLDOWN_SEC = 3600
 
+# Der Router erlaubt nur eine Sitzung: meldet sich jemand in der
+# Weboberflaeche an, pausiert der Logger seine Logins so viele Minuten
+# (bei Wiederholung doppelt so lange, hoechstens 60).
+BROWSER_PAUSE_MIN = 15
+
 # notify-Service ohne "notify."-Praefix, z.B. "mobile_app_mein_handy";
 # leer lassen = keine Push-Nachrichten
 NOTIFY_TARGET = ""
@@ -142,6 +147,10 @@ _prev_config = {}
 _download_dead = False
 _problem_since = None
 _last_auto_reboot = 0.0
+_last_session_ok = 0.0
+_pause_until = 0.0
+_pause_reason = ""
+_kick_count = 0
 _started = False
 
 
@@ -308,9 +317,36 @@ def zte_read_fields(fields=None):
     state.set("sensor.zte_debug_read", len(names), attrs)
 
 
+def _set_logger_status(now):
+    if now < _pause_until:
+        until = time.strftime("%H:%M", time.localtime(_pause_until))
+        state.set("sensor.zte_logger_status", "pausiert",
+                  {"friendly_name": "ZTE Logger Status", "icon": "mdi:pause-circle",
+                   "bis": until, "grund": _pause_reason})
+    else:
+        state.set("sensor.zte_logger_status", "aktiv",
+                  {"friendly_name": "ZTE Logger Status", "icon": "mdi:play-circle"})
+
+
+@service
+def zte_pause_logger(minutes=30):
+    """Pausiert die Router-Logins des Loggers, z.B. vor dem Arbeiten in der
+    Weboberflaeche (pyscript.zte_pause_logger, minutes: 30; 0 = fortsetzen).
+    Der TCP-Watchdog laeuft weiter."""
+    global _pause_until, _pause_reason, _kick_count
+    now = time.time()
+    _pause_until = now + float(minutes) * 60
+    _pause_reason = "manuell"
+    if float(minutes) <= 0:
+        _kick_count = 0
+    log.warning(f"zte_logger: Logins pausiert fuer {minutes} min (manuell)")
+    _set_logger_status(now)
+
+
 @time_trigger("period(now, 60 sec)")
 def zte_logger_poll():
     global _download_dead, _problem_since, _last_auto_reboot, _started
+    global _last_session_ok, _pause_until, _pause_reason, _kick_count
     _ensure_opener()
 
     # Erster Durchlauf nach dem Start: erst anmelden. Ein eigener
@@ -329,11 +365,31 @@ def zte_logger_poll():
         log.warning(f"zte_logger: Router nicht erreichbar: {e}")
         return
 
-    if data and not data.get("lte_rsrp") and not data.get("Z5g_rsrp"):
+    # Der Router erlaubt nur eine Sitzung. Da dieser Poll die eigene Sitzung
+    # jede Minute am Leben haelt, heisst ein ploetzlicher Verlust: jemand hat
+    # sich in der Weboberflaeche angemeldet. Sofortiges Neu-Anmelden wuerde
+    # ihn rauswerfen - deshalb dann Logins pausieren (15, 30, 60 min).
+    now = time.time()
+    logged_in = bool(data.get("lte_rsrp") or data.get("Z5g_rsrp"))
+    if logged_in:
+        _last_session_ok = now
+        if now - _pause_until > 1800:
+            _kick_count = 0
+    elif data and now - _last_session_ok < 90 and now >= _pause_until:
+        _kick_count += 1
+        minutes = min(BROWSER_PAUSE_MIN * 2 ** (_kick_count - 1), 60)
+        _pause_until = now + minutes * 60
+        _pause_reason = "Browser-Login erkannt"
+        log.warning(f"zte_logger: Sitzung uebernommen (Browser-Login?) - pausiere Logins fuer {minutes} min")
+    _set_logger_status(now)
+
+    if data and not logged_in and now >= _pause_until:
         if _login():
             log.info("zte_logger: Sitzung abgelaufen, neu angemeldet")
             try:
                 data = _http_get(FIELDS)
+                if data.get("lte_rsrp") or data.get("Z5g_rsrp"):
+                    _last_session_ok = now
             except Exception:
                 pass
         else:

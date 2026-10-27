@@ -14,6 +14,13 @@ in Home Assistant laufen:
 
 Beide lesen nur. Geschrieben wird ausschließlich beim Neustart des Routers.
 
+> **Nur eine Sitzung:** Der Router erlaubt nur eine angemeldete Sitzung. Meldest
+> du dich in der Weboberfläche an, verliert der Logger seine Sitzung. Er erkennt
+> das und pausiert seine Logins für 15 Minuten (bei Wiederholung 30, dann 60),
+> statt dich sofort wieder rauszuwerfen. Wer länger in der Oberfläche arbeiten
+> will, pausiert ihn vorher mit `pyscript.zte_pause_logger`. Der Watchdog läuft
+> in der Pause weiter; nur ein automatischer Neustart meldet sich trotzdem an.
+
 ## Installation
 
 1. **pyscript installieren** (über HACS) und die Integration hinzufügen.
@@ -31,6 +38,7 @@ Beide lesen nur. Geschrieben wird ausschließlich beim Neustart des Routers.
    | beide | `NOTIFY_TARGET` | notify-Service ohne `notify.`, z.B. `mobile_app_mein_handy`. Leer = keine Push-Nachrichten. |
    | `zte_logger.py` | `ZTE_HOST` | Router-IP |
    | `zte_logger.py` | `WATCHDOG_ENABLED`, `WATCHDOG_THRESHOLD_SEC`, `WATCHDOG_COOLDOWN_SEC` | Neustart nach 5 min Ausfall, höchstens einmal pro Stunde |
+   | `zte_logger.py` | `BROWSER_PAUSE_MIN` | Pause nach einem Login in der Weboberfläche (Standard 15 min) |
    | `dns_check.py` | `LOCAL_RESOLVERS` | eigene DNS-Server, z.B. `{"adguard": ("192.168.0.2", "AdGuard")}` |
    | `dns_check.py` | `ROUTER_RESOLVER` | Router-IP |
 
@@ -46,6 +54,7 @@ Nach etwa einer Minute erscheinen die Sensoren. Fehler stehen unter
 
 | Entität | Inhalt |
 |---|---|
+| `sensor.zte_logger_status` | `aktiv` oder `pausiert` (Attribute `bis`, `grund`) |
 | `binary_sensor.zte_reachable` | Internet per TCP erreichbar (kein ICMP) |
 | `binary_sensor.zte_download_dead` | Upload läuft, Download nicht |
 | `sensor.zte_watchdog_problem_seconds` | laufende Ausfalldauer |
@@ -72,6 +81,7 @@ Nach etwa einer Minute erscheinen die Sensoren. Fehler stehen unter
 | Service | Zweck |
 |---|---|
 | `pyscript.zte_reboot_router` | Router neu starten |
+| `pyscript.zte_pause_logger` | Logins pausieren, z.B. `minutes: 30`; `minutes: 0` setzt fort |
 | `pyscript.zte_read_fields` | beliebige Felder lesen, z.B. `fields: "mtu,tcp_mss"`. Ergebnis als Attribute von `sensor.zte_debug_read` und im Log. Nur lesend. |
 
 ## Beispiel-Dashboardkarte

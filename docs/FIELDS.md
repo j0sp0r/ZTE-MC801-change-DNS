@@ -26,6 +26,10 @@ final = SHA256(inner + LD)                  (Hex, GROSSBUCHSTABEN)
 POST  goformId=LOGIN, password=final        -> {"result":"0"} = Erfolg
 ```
 
+- **Es gibt nur eine Sitzung.** Ein neuer Login (z.B. in der Weboberfläche)
+  beendet die bestehende Sitzung eines Skripts und umgekehrt. Ein Skript, das
+  sich nach einem Sitzungsverlust sofort neu anmeldet, wirft den Nutzer im
+  Browser innerhalb einer Minute raus.
 - Die Sitzung läuft nach etwa 10 Minuten Inaktivität ab. Erkennbar daran,
   dass loginpflichtige Felder (`lte_rsrp`, `Z5g_rsrp`) leer zurückkommen.
   `network_type` taugt dafür **nicht**, das ist immer lesbar.
