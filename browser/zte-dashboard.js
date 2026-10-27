@@ -335,7 +335,7 @@
     window.zte_show_dns_editor = function(currentDns1, currentDns2) {
         const T = translations[localStorage.getItem('zteDashboardLanguage') || 'de'];
         const content = `
-            <label>${T.dnsPrimary}</label><input type="text" id="dns-input-1" value="${currentDns1 || ''}" placeholder="192.168.0.127">
+            <label>${T.dnsPrimary}</label><input type="text" id="dns-input-1" value="${currentDns1 || ''}" placeholder="192.168.0.2">
             <label style="margin-top:10px; display:block;">${T.dnsSecondary}</label><input type="text" id="dns-input-2" value="${currentDns2 || ''}" placeholder="1.1.1.1">
         `;
         zte_show_editor(T.dnsEditorTitle, T.dnsEditorDesc, content, zte_perform_dns_change);
