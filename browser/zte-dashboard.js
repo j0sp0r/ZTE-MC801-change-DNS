@@ -87,13 +87,15 @@
             success: "Erfolgreich",
             error: "Fehler",
             dnsEditorTitle: "DNS-Server anpassen",
-            dnsEditorDesc: "Geben Sie die primäre und sekundäre DNS-Adresse ein. Für Auto-DNS des Providers leer lassen oder 'AUTO' schreiben.",
+            dnsEditorDesc: "Geben Sie die primäre und sekundäre DNS-Adresse ein. Für Auto-DNS des Providers leer lassen oder 'AUTO' schreiben. Hinweis: Das aktive APN-Profil wird dabei als manuelles Profil gespeichert.",
             lteEditorTitle: "LTE Bänder anpassen",
             lteEditorDesc: "Geben Sie die gewünschten Bänder mit + getrennt ein (z.B. 1+3+20) oder 'AUTO' für alle.",
             nrEditorTitle: "5G Bänder anpassen",
             nrEditorDesc: "Geben Sie die gewünschten Bänder mit + getrennt ein (z.B. 28+78) oder 'AUTO' für alle.",
             reset: "Reset / Auto",
-            manual: "Manuell"
+            manual: "Manuell",
+            current: "Aktuell",
+            invalidBands: "Ungültige Bandangabe."
         },
         en: {
             dashboardTitle: "ZTE MC801A Dashboard",
@@ -149,13 +151,15 @@
             success: "Success",
             error: "Error",
             dnsEditorTitle: "Customize DNS Servers",
-            dnsEditorDesc: "Enter the primary and secondary DNS addresses. Leave empty or write 'AUTO' for provider's auto DNS.",
+            dnsEditorDesc: "Enter the primary and secondary DNS addresses. Leave empty or write 'AUTO' for provider's auto DNS. Note: the active APN profile is saved as a manual profile.",
             lteEditorTitle: "Customize LTE Bands",
             lteEditorDesc: "Enter the desired bands separated by + (e.g., 1+3+20) or 'AUTO' for all.",
             nrEditorTitle: "Customize 5G Bands",
             nrEditorDesc: "Enter the desired bands separated by + (e.g., 28+78) or 'AUTO' for all.",
             reset: "Reset / Auto",
-            manual: "Manual"
+            manual: "Manual",
+            current: "Current",
+            invalidBands: "Invalid band list."
         }
     };
 
@@ -182,7 +186,31 @@
     );
     $("body").append(dashboard);
 
-    var siginfo = "wan_active_band,wan_active_channel,wan_lte_ca,wan_apn,wan_ipaddr,cell_id,nr5g_cell_id,dns_mode,prefer_dns_manual,standby_dns_manual,network_type,network_provider_fullname,rmcc,rmnc,lte_rsrq,lte_rssi,lte_rsrp,lte_snr,lte_ca_pcell_band,lte_ca_pcell_bandwidth,lte_multi_ca_scell_info,Z5g_SINR,Z5g_rsrp,nr5g_pci,nr5g_action_channel,nr5g_action_band,pm_sensor_mdm,pm_modem_5g,wa_inner_version,cr_version,RD,BearerPreference,lte_band_mask,nr5g_band_mask";
+    var siginfo = "wan_active_band,wan_active_channel,wan_lte_ca,wan_apn,wan_ipaddr,cell_id,nr5g_cell_id,dns_mode,prefer_dns_manual,standby_dns_manual,network_type,network_provider_fullname,rmcc,rmnc,lte_rsrq,lte_rssi,lte_rsrp,lte_snr,lte_ca_pcell_band,lte_ca_pcell_bandwidth,lte_multi_ca_scell_info,Z5g_SINR,Z5g_rsrp,nr5g_pci,nr5g_action_channel,nr5g_action_band,pm_sensor_mdm,pm_modem_5g,wa_inner_version,cr_version,net_select,lte_band_lock,nr5g_nsa_band_lock";
+
+    // Werte vom Router nie ungefiltert ins HTML
+    function esc(v) {
+        return String(v === undefined || v === null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // lte_band_lock ist eine Hex-Bitmaske (Bit 0 = Band 1); BigInt, weil Bänder > 53 sonst ungenau werden
+    function decodeLteMask(hex) {
+        try {
+            const m = BigInt(hex);
+            const bands = [];
+            for (let i = 0n; i < 128n; i++) { if ((m >> i) & 1n) bands.push(Number(i + 1n)); }
+            return bands.join('+');
+        } catch (e) { return ''; }
+    }
+
+    // Zugeklappte Abschnitte überleben das Neuzeichnen alle 5 Sekunden
+    const collapsedSections = new Set(JSON.parse(localStorage.getItem('zteDashboardCollapsed') || '[]'));
+    window.zte_toggle_section = function(el) {
+        const key = $(el).data('section');
+        $(el).next().slideToggle();
+        if (collapsedSections.has(key)) collapsedSections.delete(key); else collapsedSections.add(key);
+        localStorage.setItem('zteDashboardCollapsed', JSON.stringify([...collapsedSections]));
+    };
 
     function getRating(value, thresholds, labels) {
         value = parseFloat(value);
@@ -246,20 +274,20 @@
                         <a href="#" onclick="window.zte_toggleLanguage('de'); return false;" class="${currentLang === 'de' ? 'active' : ''}">DE</a>
                         <a href="#" onclick="window.zte_toggleLanguage('en'); return false;" class="${currentLang === 'en' ? 'active' : ''}">EN</a>
                     </div>
-                    <div class="zte-section"><div class="zte-section-title" onclick="$(this).next().slideToggle();">${T.simpleOverview}</div><div class="zte-section-content" style="display: block;"><table class="info-table"><tr><td>${T.receptionStrength}:</td><td style="font-weight:bold; color:${rsrpRating.color};">${T[rsrpRating.text]}</td></tr><tr><td>${T.signalQuality}:</td><td style="font-weight:bold; color:${sinrRating.color};">${T[sinrRating.text]}</td></tr><tr><td>${T.networkType}:</td><td>${netzwerkText}</td></tr><tr><td>${T.performance}:</td><td>${performanceText}</td></tr></table></div></div>
-                    <div class="zte-section"><div class="zte-section-title" onclick="$(this).next().slideToggle();">${T.networkDetails}</div><div class="zte-section-content" style="display: block;"><table class="info-table"><tr><td>${T.provider}:</td><td>${d.network_provider_fullname || '-'}</td></tr><tr><td>${T.connection}:</td><td>${d.network_type || '-'}</td></tr><tr><td>${T.wanIP}:</td><td>${d.wan_ipaddr || '-'}</td></tr><tr><td>${T.apn}:</td><td>${d.wan_apn || '-'}</td></tr><tr><td>${cellInfo.type || T.cell}:</td><td>${cellInfo.id || '-'} | ${T.sector}: ${cellInfo.sector || '-'}</td></tr><tr><td>${T.dnsPrimary}:</td><td>${d.prefer_dns_manual || 'Auto'}</td></tr><tr><td>${T.dnsSecondary}:</td><td>${d.standby_dns_manual || 'Auto'}</td></tr></table></div></div>
-                    <div class="zte-section"><div class="zte-section-title" onclick="$(this).next().slideToggle();">${T.signalDetails}</div><div class="zte-section-content" style="display: block;"><div class="signal-block"><b>LTE Primary (${d.lte_ca_pcell_band || 'B?'}, ${d.lte_ca_pcell_bandwidth || '?MHz'})</b><table class="info-table"><tr><td>RSRP/RSRQ:</td><td>${d.lte_rsrp || 'N/A'} dBm / ${d.lte_rsrq || 'N/A'} dB</td></tr><tr><td>SINR/RSSI:</td><td>${d.lte_snr || 'N/A'} dB / ${d.lte_rssi || 'N/A'} dBm</td></tr></table></div>${ca_cells.map(c => `<div class="signal-block"><b>LTE CA (${'B'+c.band}, ${c.bw}Mhz)</b><table class="info-table"><tr><td>PCI:</td><td>${c.pci}</td></tr></table></div>`).join('')}<div class="signal-block"><b>5G (${d.nr5g_action_band || 'N?'})</b><table class="info-table"><tr><td>RSRP/SINR:</td><td>${d.Z5g_rsrp || 'N/A'} dBm / ${d.Z5g_SINR || 'N/A'} dB</td></tr><tr><td>PCI/ARFCN:</td><td>${d.nr5g_pci || 'N/A'} / ${d.nr5g_action_channel || 'N/A'}</td></tr></table></div></div></div>
-                    <div class="zte-section"><div class="zte-section-title" onclick="$(this).next().slideToggle();">${T.systemDetails}</div><div class="zte-section-content" style="display: block;"><table class="info-table"><tr><td>${T.temp4G5G}:</td><td>${d.pm_sensor_mdm || 'N/A'}°C / ${d.pm_modem_5g || 'N/A'}°C</td></tr><tr><td>${T.firmware}:</td><td>${d.wa_inner_version || '-'}</td></tr><tr><td>${T.configVer}:</td><td>${d.cr_version || '-'}</td></tr></table><div class="zte-button-row" style="margin-top:10px;"><button onclick="window.zte_show_reboot_confirm()">&#10227; ${T.reboot}</button></div></div></div>
-                    <div class="zte-section"><div class="zte-section-title" onclick="$(this).next().slideToggle();">${T.actions}</div><div class="zte-section-content" style="display: block;"><b>${T.networkMode}</b><div class="zte-button-row"><button id="btn-mode-auto" onclick="window.zte_set_net_mode('WL_AND_5G')">4G/5G Auto</button><button id="btn-mode-nsa" onclick="window.zte_set_net_mode('LTE_AND_5G')">5G NSA</button><button id="btn-mode-4g" onclick="window.zte_set_net_mode('Only_LTE')">4G</button></div><b style="display:block; margin-top:10px;">${T.bandLock5G}</b><div class="zte-button-row"><button id="btn-5g-auto" onclick="window.zte_nrbandselection('AUTO')">${T.reset}</button><button id="btn-5g-n78" onclick="window.zte_nrbandselection('78')">N78</button><button id="btn-5g-n28" onclick="window.zte_nrbandselection('28')">N28</button><button id="btn-5g-n28-78" onclick="window.zte_nrbandselection('28+78')">N28+78</button><button onclick="window.zte_show_band_editor('5G')">${T.manual}</button></div><b style="display:block; margin-top:10px;">${T.bandLock4G}</b><div class="zte-button-row"><button id="btn-4g-auto" onclick="window.zte_ltebandselection('AUTO')">${T.reset}</button><button id="btn-4g-1-3-7-20" onclick="window.zte_ltebandselection('1+3+7+20')">1+3+7+20</button><button onclick="window.zte_show_band_editor('4G')">${T.manual}</button></div><b style="display:block; margin-top:10px;">${T.configuration}</b><div class="zte-button-row"><button id="btn-dns-change" onclick="window.zte_show_dns_editor('${d.prefer_dns_manual}','${d.standby_dns_manual}')">${T.changeDNS}</button><button id="btn-dns-auto" onclick="window.zte_reset_dns()">${T.dnsAuto}</button></div></div></div>
+                    <div class="zte-section"><div class="zte-section-title" data-section="overview" onclick="window.zte_toggle_section(this)">${T.simpleOverview}</div><div class="zte-section-content" style="display: ${collapsedSections.has('overview') ? 'none' : 'block'};"><table class="info-table"><tr><td>${T.receptionStrength}:</td><td style="font-weight:bold; color:${rsrpRating.color};">${T[rsrpRating.text]}</td></tr><tr><td>${T.signalQuality}:</td><td style="font-weight:bold; color:${sinrRating.color};">${T[sinrRating.text]}</td></tr><tr><td>${T.networkType}:</td><td>${netzwerkText}</td></tr><tr><td>${T.performance}:</td><td>${performanceText}</td></tr></table></div></div>
+                    <div class="zte-section"><div class="zte-section-title" data-section="network" onclick="window.zte_toggle_section(this)">${T.networkDetails}</div><div class="zte-section-content" style="display: ${collapsedSections.has('network') ? 'none' : 'block'};"><table class="info-table"><tr><td>${T.provider}:</td><td>${esc(d.network_provider_fullname || '-')}</td></tr><tr><td>${T.connection}:</td><td>${esc(d.network_type || '-')}</td></tr><tr><td>${T.wanIP}:</td><td>${esc(d.wan_ipaddr || '-')}</td></tr><tr><td>${T.apn}:</td><td>${esc(d.wan_apn || '-')}</td></tr><tr><td>${cellInfo.type || T.cell}:</td><td>${cellInfo.id || '-'} | ${T.sector}: ${cellInfo.sector || '-'}</td></tr><tr><td>${T.dnsPrimary}:</td><td>${esc(d.prefer_dns_manual || 'Auto')}</td></tr><tr><td>${T.dnsSecondary}:</td><td>${esc(d.standby_dns_manual || 'Auto')}</td></tr></table></div></div>
+                    <div class="zte-section"><div class="zte-section-title" data-section="signal" onclick="window.zte_toggle_section(this)">${T.signalDetails}</div><div class="zte-section-content" style="display: ${collapsedSections.has('signal') ? 'none' : 'block'};"><div class="signal-block"><b>LTE Primary (${d.lte_ca_pcell_band || 'B?'}, ${d.lte_ca_pcell_bandwidth || '?MHz'})</b><table class="info-table"><tr><td>RSRP/RSRQ:</td><td>${d.lte_rsrp || 'N/A'} dBm / ${d.lte_rsrq || 'N/A'} dB</td></tr><tr><td>SINR/RSSI:</td><td>${d.lte_snr || 'N/A'} dB / ${d.lte_rssi || 'N/A'} dBm</td></tr></table></div>${ca_cells.map(c => `<div class="signal-block"><b>LTE CA (${'B'+c.band}, ${c.bw}Mhz)</b><table class="info-table"><tr><td>PCI:</td><td>${c.pci}</td></tr></table></div>`).join('')}<div class="signal-block"><b>5G (${d.nr5g_action_band || 'N?'})</b><table class="info-table"><tr><td>RSRP/SINR:</td><td>${d.Z5g_rsrp || 'N/A'} dBm / ${d.Z5g_SINR || 'N/A'} dB</td></tr><tr><td>PCI/ARFCN:</td><td>${d.nr5g_pci || 'N/A'} / ${d.nr5g_action_channel || 'N/A'}</td></tr></table></div></div></div>
+                    <div class="zte-section"><div class="zte-section-title" data-section="system" onclick="window.zte_toggle_section(this)">${T.systemDetails}</div><div class="zte-section-content" style="display: ${collapsedSections.has('system') ? 'none' : 'block'};"><table class="info-table"><tr><td>${T.temp4G5G}:</td><td>${d.pm_sensor_mdm || 'N/A'}°C / ${d.pm_modem_5g || 'N/A'}°C</td></tr><tr><td>${T.firmware}:</td><td>${esc(d.wa_inner_version || '-')}</td></tr><tr><td>${T.configVer}:</td><td>${esc(d.cr_version || '-')}</td></tr></table><div class="zte-button-row" style="margin-top:10px;"><button onclick="window.zte_show_reboot_confirm()">&#10227; ${T.reboot}</button></div></div></div>
+                    <div class="zte-section"><div class="zte-section-title" data-section="actions" onclick="window.zte_toggle_section(this)">${T.actions}</div><div class="zte-section-content" style="display: ${collapsedSections.has('actions') ? 'none' : 'block'};"><b>${T.networkMode}</b><div class="zte-button-row"><button id="btn-mode-auto" onclick="window.zte_set_net_mode('WL_AND_5G')">4G/5G Auto</button><button id="btn-mode-nsa" onclick="window.zte_set_net_mode('LTE_AND_5G')">5G NSA</button><button id="btn-mode-4g" onclick="window.zte_set_net_mode('Only_LTE')">4G</button></div><b style="display:block; margin-top:10px;">${T.bandLock5G}</b><div style="color:#a0aec0;">${T.current}: ${esc((d.nr5g_nsa_band_lock || '-').split(',').join('+'))}</div><div class="zte-button-row"><button id="btn-5g-auto" onclick="window.zte_nrbandselection('AUTO')">${T.reset}</button><button id="btn-5g-n78" onclick="window.zte_nrbandselection('78')">N78</button><button id="btn-5g-n28" onclick="window.zte_nrbandselection('28')">N28</button><button id="btn-5g-n28-78" onclick="window.zte_nrbandselection('28+78')">N28+78</button><button onclick="window.zte_show_band_editor('5G')">${T.manual}</button></div><b style="display:block; margin-top:10px;">${T.bandLock4G}</b><div style="color:#a0aec0;">${T.current}: ${esc(decodeLteMask(d.lte_band_lock) || '-')}</div><div class="zte-button-row"><button id="btn-4g-auto" onclick="window.zte_ltebandselection('AUTO')">${T.reset}</button><button id="btn-4g-1-3-7-20" onclick="window.zte_ltebandselection('1+3+7+20')">1+3+7+20</button><button onclick="window.zte_show_band_editor('4G')">${T.manual}</button></div><b style="display:block; margin-top:10px;">${T.configuration}</b><div class="zte-button-row"><button id="btn-dns-change" onclick="window.zte_show_dns_editor('${esc(d.prefer_dns_manual)}','${esc(d.standby_dns_manual)}')">${T.changeDNS}</button><button id="btn-dns-auto" onclick="window.zte_reset_dns()">${T.dnsAuto}</button></div></div></div>
                 `;
                 $('#zte-dynamic-content').html(content);
                 
                 // --- DYNAMIC HIGHLIGHTING ---
-                if (d.BearerPreference === "" || d.BearerPreference === 'WL_AND_5G') {
+                if (d.net_select === 'WL_AND_5G') {
                     $('#btn-mode-auto').addClass('active');
-                } else if (d.BearerPreference === 'LTE_AND_5G') {
+                } else if (d.net_select === 'LTE_AND_5G') {
                     $('#btn-mode-nsa').addClass('active');
-                } else if (d.BearerPreference === 'Only_LTE') {
+                } else if (d.net_select === 'Only_LTE') {
                     $('#btn-mode-4g').addClass('active');
                 }
 
@@ -307,7 +335,7 @@
     window.zte_show_dns_editor = function(currentDns1, currentDns2) {
         const T = translations[localStorage.getItem('zteDashboardLanguage') || 'de'];
         const content = `
-            <label>${T.dnsPrimary}</label><input type="text" id="dns-input-1" value="${currentDns1 || ''}" placeholder="192.168.0.127">
+            <label>${T.dnsPrimary}</label><input type="text" id="dns-input-1" value="${currentDns1 || ''}" placeholder="192.168.0.2">
             <label style="margin-top:10px; display:block;">${T.dnsSecondary}</label><input type="text" id="dns-input-2" value="${currentDns2 || ''}" placeholder="1.1.1.1">
         `;
         zte_show_editor(T.dnsEditorTitle, T.dnsEditorDesc, content, zte_perform_dns_change);
@@ -346,6 +374,13 @@
         zte_perform_dns_change('auto', '', '');
     }
     
+    // Speichert nur andere DNS-Server. Alle übrigen Werte des aktiven APN-Profils
+    // (PDP-Typ, APN, IPv6-APN, Zugangsdaten, Profilname) werden vorher gelesen und
+    // unverändert zurückgeschrieben - ein fest gesetztes pdp_type "IP" hätte z.B.
+    // ein IPv4v6-Profil (Telekom internet.v6.telekom) auf reines IPv4 umgestellt.
+    // Parameter wie in der Router-eigenen Oberfläche (js/service.js, APN_PROC_EX).
+    var APN_FIELDS = "wa_inner_version,cr_version,RD,m_profile_name,profile_name,pdp_type,pdp_type_roaming,wan_apn,ppp_auth_mode,ppp_username,ppp_passwd,ipv6_wan_apn,ipv6_pdp_type,ipv6_ppp_auth_mode,ipv6_ppp_username,ipv6_ppp_passwd,ipv6_dns_mode,ipv6_prefer_dns_manual,ipv6_standby_dns_manual";
+
     window.zte_perform_dns_change = function(mode, primary, secondary) {
         var T = translations[localStorage.getItem('zteDashboardLanguage') || 'de'];
         var dns_mode = mode || 'manual';
@@ -353,15 +388,29 @@
         var secondary_dns = secondary !== undefined ? secondary : $('#dns-input-2').val().trim();
         if (primary_dns.toLowerCase() === 'auto' || primary_dns === '') dns_mode = 'auto';
         
-        $.ajax({ type: "GET", url: "/goform/goform_get_cmd_process", data: { cmd: "wa_inner_version,cr_version,RD,wan_apn", multi_data: "1" }, dataType: "json",
+        $.ajax({ type: "GET", url: "/goform/goform_get_cmd_process", data: { cmd: APN_FIELDS, multi_data: "1" }, dataType: "json",
             success: function(a) {
+                var pdp_type = a.pdp_type || 'IP';
+                var pdp_type_roaming = a.pdp_type_roaming || pdp_type;
                 var ad = hex_md5(hex_md5(a.wa_inner_version + a.cr_version) + a.RD);
-                $.ajax({ type: "POST", url: "/goform/goform_set_cmd_process", data: { isTest: "false", goformId: "APN_PROC_EX", wan_apn: a.wan_apn, profile_name: "miononno", apn_action: "save", apn_mode: "manual", pdp_type: "IP", dns_mode: dns_mode, prefer_dns_manual: primary_dns, standby_dns_manual: secondary_dns, index: 1, AD: ad },
+                var save = { isTest: "false", goformId: "APN_PROC_EX", apn_action: "save", apn_mode: "manual",
+                    profile_name: a.m_profile_name || a.profile_name || "Internet", wan_dial: "*99#", apn_select: "manual",
+                    pdp_type: pdp_type, pdp_type_roaming: pdp_type_roaming, pdp_select: "auto", pdp_addr: "", index: 1, AD: ad };
+                if (pdp_type !== 'IPv6') {
+                    $.extend(save, { wan_apn: a.wan_apn, ppp_auth_mode: a.ppp_auth_mode, ppp_username: a.ppp_username, ppp_passwd: a.ppp_passwd,
+                        dns_mode: dns_mode, prefer_dns_manual: primary_dns, standby_dns_manual: secondary_dns });
+                }
+                if (pdp_type !== 'IP') {
+                    $.extend(save, { ipv6_wan_apn: a.ipv6_wan_apn || a.wan_apn, ipv6_ppp_auth_mode: a.ipv6_ppp_auth_mode, ipv6_ppp_username: a.ipv6_ppp_username,
+                        ipv6_ppp_passwd: a.ipv6_ppp_passwd, ipv6_dns_mode: a.ipv6_dns_mode || 'auto', ipv6_prefer_dns_manual: a.ipv6_prefer_dns_manual,
+                        ipv6_standby_dns_manual: a.ipv6_standby_dns_manual });
+                }
+                $.ajax({ type: "POST", url: "/goform/goform_set_cmd_process", data: save,
                     success: function() {
                         $.ajax({ type: "GET", url: "/goform/goform_get_cmd_process", data: { cmd: "wa_inner_version,cr_version,RD", multi_data: "1" }, dataType: "json",
                              success: function(b) {
                                  var ad2 = hex_md5(hex_md5(b.wa_inner_version + b.cr_version) + b.RD);
-                                 $.ajax({ type: "POST", url: "/goform/goform_set_cmd_process", data: { isTest: "false", goformId: "APN_PROC_EX", apn_mode: "manual", apn_action: "set_default", set_default_flag: 1, pdp_type: "IP", pdp_type_roaming: "IP", index: 1, AD: ad2 },
+                                 $.ajax({ type: "POST", url: "/goform/goform_set_cmd_process", data: { isTest: "false", goformId: "APN_PROC_EX", apn_mode: "manual", apn_action: "set_default", set_default_flag: 1, pdp_type: pdp_type, pdp_type_roaming: pdp_type_roaming, index: 1, AD: ad2 },
                                      success: function() { zte_show_status_message(T.dnsSuccess + T.patienceWarning, false); getStatus(); },
                                      error: function() { zte_show_status_message(T.error, true); }
                                  });
@@ -374,7 +423,7 @@
     };
 
     window.zte_set_net_mode = function(mode) { var T = translations[localStorage.getItem('zteDashboardLanguage') || 'de']; $.ajax({type: "GET", url: "/goform/goform_get_cmd_process", data: {cmd: "wa_inner_version,cr_version,RD", multi_data: "1"}, dataType: "json", success: function(a) { var ad = hex_md5(hex_md5(a.wa_inner_version + a.cr_version) + a.RD); $.ajax({type: "POST", url: "/goform/goform_set_cmd_process", data: {isTest: "false", goformId: "SET_BEARER_PREFERENCE", BearerPreference: mode, AD: ad}, success: function(r){ if(JSON.parse(r).result === "success") {zte_show_status_message(T.netModeSuccess(mode) + T.patienceWarning, false); getStatus();} else {zte_show_status_message(T.netModeError, true);} }}); }}); };
-    window.zte_ltebandselection = function(bands) { var T = translations[localStorage.getItem('zteDashboardLanguage') || 'de']; if(bands === null || bands.trim() === "") return; var band_mask = 0; if (bands.toUpperCase() === 'AUTO') { band_mask = "0xA3E2AB0908DF"; } else { bands.split('+').forEach(function(b) { band_mask += Math.pow(2, parseInt(b) - 1); }); band_mask = "0x" + band_mask.toString(16); } $.ajax({type: "GET", url: "/goform/goform_get_cmd_process", data: {cmd: "wa_inner_version,cr_version,RD", multi_data: "1"}, dataType: "json", success: function(a) { var ad = hex_md5(hex_md5(a.wa_inner_version + a.cr_version) + a.RD); $.ajax({type: "POST", url: "/goform/goform_set_cmd_process", data: {isTest: "false", goformId: "BAND_SELECT", is_lte_band: 1, lte_band_mask: band_mask, AD: ad}, success: function(){zte_show_status_message(T.bandsSetSuccess('LTE') + T.patienceWarning, false); getStatus();}}); }}); };
+    window.zte_ltebandselection = function(bands) { var T = translations[localStorage.getItem('zteDashboardLanguage') || 'de']; if(bands === null || bands.trim() === "") return; var band_mask = 0n; if (bands.toUpperCase() === 'AUTO') { band_mask = "0xA3E2AB0908DF"; } else { var list = bands.split('+').map(function(b) { return parseInt(b, 10); }); if (list.some(function(b) { return !(b >= 1 && b <= 128); })) { zte_show_status_message(T.invalidBands, true); return; } list.forEach(function(b) { band_mask |= 1n << BigInt(b - 1); }); band_mask = "0x" + band_mask.toString(16); } $.ajax({type: "GET", url: "/goform/goform_get_cmd_process", data: {cmd: "wa_inner_version,cr_version,RD", multi_data: "1"}, dataType: "json", success: function(a) { var ad = hex_md5(hex_md5(a.wa_inner_version + a.cr_version) + a.RD); $.ajax({type: "POST", url: "/goform/goform_set_cmd_process", data: {isTest: "false", goformId: "BAND_SELECT", is_lte_band: 1, lte_band_mask: band_mask, AD: ad}, success: function(){zte_show_status_message(T.bandsSetSuccess('LTE') + T.patienceWarning, false); getStatus();}}); }}); };
     window.zte_nrbandselection = function(bands) { var T = translations[localStorage.getItem('zteDashboardLanguage') || 'de']; if(bands === null || bands.trim() === "") return; var band_mask = ""; if (bands.toUpperCase() === 'AUTO') { band_mask = "1,2,3,5,7,8,20,28,38,41,50,51,66,70,71,74,75,76,77,78,79,80,81,82,83,84"; } else { band_mask = bands.split('+').join(","); } $.ajax({type: "GET", url: "/goform/goform_get_cmd_process", data: {cmd: "wa_inner_version,cr_version,RD", multi_data: "1"}, dataType: "json", success: function(a) { var ad = hex_md5(hex_md5(a.wa_inner_version + a.cr_version) + a.RD); $.ajax({type: "POST", url: "/goform/goform_set_cmd_process", data: {isTest: "false", goformId: "WAN_PERFORM_NR5G_BAND_LOCK", nr5g_band_mask: band_mask, AD: ad}, success: function(){zte_show_status_message(T.bandsSetSuccess('5G') + T.patienceWarning, false); getStatus();}}); }}); };
     
     window.zte_toggleLanguage = function(lang) {
@@ -384,12 +433,22 @@
 
     function check_log_in(logged_in_callback, not_logged_in_callback) { $.ajax({type: "GET", url: "/goform/goform_get_cmd_process", data: {multi_data: "1", cmd: "loginfo"}, dataType: "json", success: function(a) { if (a.loginfo && a.loginfo.toLowerCase() === "ok") { if (logged_in_callback) logged_in_callback(); } else { if (not_logged_in_callback) not_logged_in_callback(); } }, error: not_logged_in_callback}); }
 
-    check_log_in( function() {
+    function start() {
         if(typeof hex_md5 !== 'function'){
             var script = document.createElement('script');
             script.src = "https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js";
-            script.onload = function() { getStatus(); setInterval(getStatus, 5000); };
+            script.onload = function() { if (typeof hex_md5 !== 'function') window.hex_md5 = window.md5; getStatus(); setInterval(getStatus, 5000); };
             document.head.appendChild(script);
         } else { getStatus(); setInterval(getStatus, 5000); }
-    }, function() { var T = translations[currentLang]; dashboard.html(`<h2>${T.errorLoading}</h2><p>${T.errorText}</p>`); });
+    }
+
+    // Als Userscript läuft das Skript schon auf der Login-Seite: dann unsichtbar
+    // warten, bis der Login durch ist. Aus der Konsole gestartet: Hinweis zeigen.
+    function waitForLogin() {
+        check_log_in(function() { dashboard.show(); start(); }, function() {
+            if (window.ZTE_DASHBOARD_USERSCRIPT || typeof GM_info !== 'undefined') { dashboard.hide(); setTimeout(waitForLogin, 3000); }
+            else { var T = translations[currentLang]; dashboard.html(`<h2>${T.errorLoading}</h2><p>${T.errorText}</p>`); }
+        });
+    }
+    waitForLogin();
 })();
