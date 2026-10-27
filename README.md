@@ -1,8 +1,14 @@
+**[English](#english) | [Deutsch](#deutsch)** · [Changelog](CHANGELOG.md)
+
 <a name="english"></a>
 
-## ZTE MC801A Dashboard Script (English)
+## ZTE MC801A Toolkit (English)
 
-A JavaScript-based dashboard for advanced control and monitoring of the ZTE MC801A 5G router. This script runs directly in the browser and overlays a powerful user interface on top of the router's default web page.
+Tools for the ZTE MC801A (HyperBox 5G) router:
+
+* **Browser dashboard:** overlays the router's web page and unlocks settings the stock interface hides – DNS servers, band locking, network mode – plus detailed signal values.
+* **Home Assistant:** sensors for signal, cell, throughput and configuration, a watchdog that reboots the router when the connection is dead, and a DNS check per AdGuard Home/Pi-hole instance.
+* **API reference:** verified goform field names, the login and token procedure, and known pitfalls.
 
 It solves the problem that many routers provided by ISPs (like Telekom, O2, etc.) are heavily restricted in their functionality, preventing access to important settings like DNS servers or band locking.
 
@@ -14,7 +20,8 @@ It solves the problem that many routers provided by ISPs (like Telekom, O2, etc.
 
 * **Live Dashboard:** Detailed real-time information on network, signal values (RSRP, SINR, etc.), temperatures, and system.
 * **Simple Overview:** A beginner-friendly summary of the most important status indicators, which evaluates reception and performance in easy-to-understand terms.
-* **Advanced Control:** Network Mode, Band Locking, and router reboot. DNS settings can be changed directly via the UI, ideal for use with **AdGuard Home** or **Pi-hole**.
+* **Advanced Control:** Network Mode, Band Locking, and router reboot. DNS settings can be changed directly via the UI, ideal for use with **AdGuard Home** or **Pi-hole**. The currently active network mode and band lock are shown.
+* **Userscript:** Optionally loads automatically with Tampermonkey/Violentmonkey after you log in – no more pasting into the console.
 * **Multilingual:** The entire interface can be switched between German and English with a click (selection is saved).
 * **No Installation Needed:** Runs temporarily in the browser without modifying the router's firmware.
 * **Home Assistant integration:** Sensors, connection watchdog with automatic reboot, reboot button and a DNS check per AdGuard/Pi-hole instance, see [`home-assistant/`](home-assistant/README.md).
@@ -60,9 +67,15 @@ This project is licensed under the **AGPL-3.0 License**. See the `LICENSE` file 
 Use of this script is entirely at **your own risk**. The author of this repository is **not responsible for any technical problems, connection failures, or potential defects to the router** that may arise from using the script. You are changing advanced settings not intended for end-user access by the manufacturer.
 
 ---
-## ZTE MC801A Dashboard Skript (Deutsch)
+<a name="deutsch"></a>
 
-Ein JavaScript-basiertes Dashboard zur erweiterten Steuerung und Überwachung des ZTE MC801A 5G Routers. Dieses Skript wird direkt im Browser ausgeführt und blendet eine leistungsstarke Benutzeroberfläche über die Standard-Webseite des Routers.
+## ZTE MC801A Toolkit (Deutsch)
+
+Werkzeuge für den Router ZTE MC801A (HyperBox 5G):
+
+* **Browser-Dashboard:** blendet sich über die Weboberfläche des Routers und macht Einstellungen zugänglich, die die Standard-Oberfläche versteckt – DNS-Server, Band-Locking, Netzmodus – plus detaillierte Signalwerte.
+* **Home Assistant:** Sensoren für Signal, Zelle, Durchsatz und Konfiguration, ein Watchdog, der den Router bei toter Verbindung neu startet, und ein DNS-Check pro AdGuard-Home-/Pi-hole-Instanz.
+* **API-Referenz:** geprüfte goform-Feldnamen, Login- und Token-Verfahren und bekannte Stolperfallen.
 
 Es löst das Problem, dass viele von Providern (wie Telekom, o2, etc.) bereitgestellte Router in ihren Funktionen stark eingeschränkt sind und wichtige Einstellungen wie DNS-Server oder Band-Locking nicht zugänglich machen.
 
@@ -70,7 +83,8 @@ Es löst das Problem, dass viele von Providern (wie Telekom, o2, etc.) bereitges
 
 * **Live-Dashboard:** Detaillierte Echtzeit-Informationen zu Netzwerk, Signalwerten (RSRP, SINR, etc.), Temperaturen und System.
 * **Einfache Übersicht:** Eine anfängerfreundliche Zusammenfassung der wichtigsten Status-Indikatoren, die den Empfang und die Leistung in verständlichen Worten bewertet.
-* **Erweiterte Steuerung:** Network Mode, Band Locking und Neustart des Routers. Die DNS-Einstellungen können direkt über die Oberfläche geändert werden, ideal für die Nutzung mit **AdGuard Home** oder **Pi-hole**.
+* **Erweiterte Steuerung:** Network Mode, Band Locking und Neustart des Routers. Die DNS-Einstellungen können direkt über die Oberfläche geändert werden, ideal für die Nutzung mit **AdGuard Home** oder **Pi-hole**. Der aktive Netzmodus und die aktuelle Band-Sperre werden angezeigt.
+* **Userscript:** Lädt sich auf Wunsch mit Tampermonkey/Violentmonkey nach dem Login automatisch – kein Einfügen in die Konsole mehr.
 * **Mehrsprachig:** Die gesamte Oberfläche ist per Klick zwischen Deutsch und Englisch umschaltbar (Auswahl wird gespeichert).
 * **Keine Installation nötig:** Läuft temporär im Browser, ohne die Router-Firmware zu verändern.
 * **Home Assistant:** Sensoren, Verbindungs-Watchdog mit automatischem Neustart, Neustart-Button und DNS-Check pro AdGuard-/Pi-hole-Instanz, siehe [`home-assistant/`](home-assistant/README.md).
