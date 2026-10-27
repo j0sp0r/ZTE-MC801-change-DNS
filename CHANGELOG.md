@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.0 – 2026-10-27
+
+### Home Assistant
+
+- **Behoben: Der Logger warf Nutzer aus der Weboberfläche.** Der Router erlaubt nur eine Sitzung; der Logger meldete sich nach dem Verlust seiner Sitzung beim nächsten Poll sofort neu an. Jetzt erkennt er die Übernahme und pausiert seine Logins für 15 Minuten (bei Wiederholung 30, dann 60). Einstellbar über `BROWSER_PAUSE_MIN`.
+- Neu: `sensor.zte_logger_status` (`aktiv`/`pausiert`) und Service `pyscript.zte_pause_logger`.
+
 ## 2.0.0 – 2026-10-27
 
 **Umstieg:** Das Dashboard liegt jetzt unter `browser/zte-dashboard.js` (vorher `script.js`). Wer es per Konsole nutzt, kopiert ab jetzt diese Datei.
