@@ -12,8 +12,7 @@ Tools for the ZTE MC801A (HyperBox 5G) router:
 
 It solves the problem that many routers provided by ISPs (like Telekom, O2, etc.) are heavily restricted in their functionality, preventing access to important settings like DNS servers or band locking.
 
-<img width="222" height="944" alt="Screenshot 1" src="https://github.com/user-attachments/assets/9ef2941b-0717-457c-b18a-a160949ffc39" />
-<img width="287" height="229" alt="Screenshot 2" src="https://github.com/user-attachments/assets/aadfb2c8-a018-47ed-96cc-83259bbe2c53" />
+<img width="260" alt="Dashboard: overview, network, signal and system" src="docs/img/dashboard.png" /> <img width="292" alt="Dashboard: network mode, band lock and DNS settings" src="docs/img/dashboard-settings.png" />
 
 
 ### Features
