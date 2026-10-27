@@ -17,17 +17,31 @@ It solves the problem that many routers provided by ISPs (like Telekom, O2, etc.
 * **Advanced Control:** Network Mode, Band Locking, and router reboot. DNS settings can be changed directly via the UI, ideal for use with **AdGuard Home** or **Pi-hole**.
 * **Multilingual:** The entire interface can be switched between German and English with a click (selection is saved).
 * **No Installation Needed:** Runs temporarily in the browser without modifying the router's firmware.
+* **Home Assistant integration:** Sensors, connection watchdog with automatic reboot, reboot button and a DNS check per AdGuard/Pi-hole instance, see [`home-assistant/`](home-assistant/README.md).
+
+### Repository layout
+
+| Path | Content |
+|---|---|
+| [`browser/zte-dashboard.js`](browser/zte-dashboard.js) | the dashboard |
+| [`browser/zte-dashboard.user.js`](browser/zte-dashboard.user.js) | userscript that loads the dashboard automatically |
+| [`home-assistant/`](home-assistant/README.md) | pyscript apps for Home Assistant (German docs) |
+| [`docs/FIELDS.md`](docs/FIELDS.md) | goform API reference: verified field names, login, AD token, pitfalls (German) |
 
 ### Usage
 
-The best way to use this script is via the browser's developer console.
+**Option 1 – Userscript (recommended):** Install [Tampermonkey](https://www.tampermonkey.net/) or [Violentmonkey](https://violentmonkey.github.io/), then open [`browser/zte-dashboard.user.js`](https://raw.githubusercontent.com/j0sp0r/ZTE-MC801-change-DNS/main/browser/zte-dashboard.user.js) and install it. The dashboard appears automatically after logging in at `http://192.168.0.1`. For a different router IP, adjust the `@match` line.
+
+**Option 2 – Browser console:**
 
 1.  Log in to the web interface of your ZTE MC801A router.
 2.  Open your browser's developer console (usually with the `F12` key, then select the "Console" tab).
-3.  Copy the entire content of the `zte-dashboard.js` file.
+3.  Copy the entire content of [`browser/zte-dashboard.js`](browser/zte-dashboard.js).
 4.  Paste the code into the console and press `Enter`.
 
 The dashboard will immediately appear in the top right corner of the page.
+
+**Note on changing DNS:** The script keeps the PDP type, APN and credentials of the active APN profile and only changes the DNS servers. The profile is saved as a manual APN profile.
 
 ### Acknowledgements & Credits
 
@@ -59,17 +73,31 @@ Es löst das Problem, dass viele von Providern (wie Telekom, o2, etc.) bereitges
 * **Erweiterte Steuerung:** Network Mode, Band Locking und Neustart des Routers. Die DNS-Einstellungen können direkt über die Oberfläche geändert werden, ideal für die Nutzung mit **AdGuard Home** oder **Pi-hole**.
 * **Mehrsprachig:** Die gesamte Oberfläche ist per Klick zwischen Deutsch und Englisch umschaltbar (Auswahl wird gespeichert).
 * **Keine Installation nötig:** Läuft temporär im Browser, ohne die Router-Firmware zu verändern.
+* **Home Assistant:** Sensoren, Verbindungs-Watchdog mit automatischem Neustart, Neustart-Button und DNS-Check pro AdGuard-/Pi-hole-Instanz, siehe [`home-assistant/`](home-assistant/README.md).
+
+### Aufbau des Repositorys
+
+| Pfad | Inhalt |
+|---|---|
+| [`browser/zte-dashboard.js`](browser/zte-dashboard.js) | das Dashboard |
+| [`browser/zte-dashboard.user.js`](browser/zte-dashboard.user.js) | Userscript, das das Dashboard automatisch lädt |
+| [`home-assistant/`](home-assistant/README.md) | pyscript-Apps für Home Assistant |
+| [`docs/FIELDS.md`](docs/FIELDS.md) | Referenz der goform-API: geprüfte Feldnamen, Login, AD-Token, Stolperfallen |
 
 ### Anwendung
 
-Die Verwendung erfolgt am besten über die Entwicklerkonsole des Browsers.
+**Variante 1 – Userscript (empfohlen):** [Tampermonkey](https://www.tampermonkey.net/) oder [Violentmonkey](https://violentmonkey.github.io/) installieren, dann [`browser/zte-dashboard.user.js`](https://raw.githubusercontent.com/j0sp0r/ZTE-MC801-change-DNS/main/browser/zte-dashboard.user.js) öffnen und installieren. Das Dashboard erscheint nach dem Login auf `http://192.168.0.1` automatisch. Bei einer anderen Router-IP die `@match`-Zeile anpassen.
+
+**Variante 2 – Browser-Konsole:**
 
 1.  Logge dich in die Weboberfläche deines ZTE MC801A Routers ein.
 2.  Öffne die Entwicklerkonsole deines Browsers (meist mit der Taste `F12` und dann den Reiter "Konsole" auswählen).
-3.  Kopiere den gesamten Inhalt der Datei `zte-dashboard.js`.
+3.  Kopiere den gesamten Inhalt der Datei [`browser/zte-dashboard.js`](browser/zte-dashboard.js).
 4.  Füge den Code in die Konsole ein und drücke `Enter`.
 
 Das Dashboard erscheint sofort oben rechts auf der Seite.
+
+**Hinweis zur DNS-Änderung:** Das Skript übernimmt PDP-Typ, APN und Zugangsdaten des aktiven APN-Profils und ändert nur die DNS-Server. Das Profil wird dabei als manuelles APN-Profil gespeichert.
 
 ### Danksagung & Credits
 
